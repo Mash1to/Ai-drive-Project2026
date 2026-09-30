@@ -10,7 +10,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(process.cwd(), 'views'));
 
 app.get('/', (req: Request, res: Response): void => {
-  res.send('Hello World!');
+  res.render('index');
 });
 
 app.listen(port, (): void => {
