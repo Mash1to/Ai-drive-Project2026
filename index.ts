@@ -14,9 +14,7 @@ app.get('/', (req: Request, res: Response): void => {
   res.render('index');
 });
 
-app.listen(port, (): void => {
-  console.log(`Server started: http://localhost:${port}`);
-});
+
 
 app.get('/api/db-check', async (_req, res) => {
   try {
@@ -47,4 +45,62 @@ app.get('/db-sample', async (_req, res) => {
     console.error('商品一覧の取得に失敗しました', error);
     res.status(503).send('商品一覧を表示できません');
   }
+});
+
+// ------------------------------
+// 新規登録機能の追加
+// ------------------------------
+
+// 新規登録フォームを表示
+app.get('/db-sample/new', (_req, res) => {
+  res.render('db-new.ejs');
+});
+
+// 新規登録データを受け取りDBに保存
+app.post('/db-sample', async (req, res) => {
+  const { name, price } = req.body;
+
+  try {
+    // 現在の最大IDを取得
+    const maxIdResult = await pool.query(
+      'SELECT MAX(id) as max_id FROM products'
+    );
+
+    const newId = (maxIdResult.rows[0].max_id || 0) + 1;
+
+    // 商品を登録
+    await pool.query(
+      'INSERT INTO products (id, name, price) VALUES ($1, $2, $3)',
+      [newId, name, price]
+    );
+
+    res.redirect('/db-sample');
+  } catch (error) {
+    console.error('商品の登録に失敗しました', error);
+    res.status(500).send('商品の登録に失敗しました');
+  }
+});
+
+// ------------------------------
+// 削除機能の追加
+// ------------------------------
+
+app.post('/db-sample/:id/delete', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query(
+      'DELETE FROM products WHERE id = $1',
+      [id]
+    );
+
+    res.redirect('/db-sample');
+  } catch (error) {
+    console.error('商品の削除に失敗しました', error);
+    res.status(500).send('商品の削除に失敗しました');
+  }
+});
+
+app.listen(port, (): void => {
+  console.log(`Server started: http://localhost:${port}`);
 });
